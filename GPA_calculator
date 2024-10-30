@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GPA Calculator</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            margin: 0;
+            padding: 12px;
+            background: #f0f0f0;
+        }
+        .card {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            max-width: 500px;
+            margin: 0 auto;
+            padding: 12px;
+        }
+        .header {
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #eee;
+        }
+        .title {
+            font-size: 20px;
+            font-weight: bold;
+            margin: 0;
+        }
+        .form {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .input-group {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+        .input-group label {
+            min-width: 90px;
+        }
+        input, select {
+            padding: 6px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            flex: 1;
+        }
+        button {
+            padding: 8px;
+            border: none;
+            border-radius: 4px;
+            color: white;
+            font-size: 14px;
+            cursor: pointer;
+        }
+        button[type="submit"] {
+            background: #2563eb;
+        }
+        button[type="submit"]:hover {
+            background: #1d4ed8;
+        }
+        .course-card {
+            border: 1px solid #ddd;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        .course-card h3 {
+            margin: 0 0 8px 0;
+            font-size: 16px;
+        }
+        .course-inputs {
+            display: flex;
+            gap: 10px;
+        }
+        .result {
+            margin-top: 12px;
+            padding: 10px;
+            background: #f8f8f8;
+            border-radius: 4px;
+            text-align: center;
+        }
+        .gpa {
+            font-size: 20px;
+            font-weight: bold;
+            margin: 0;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+    <script type="text/babel">
+        const GPACalculator = () => {
+            const [numCourses, setNumCourses] = React.useState('');
+            const [courses, setCourses] = React.useState([]);
+            const [showForm, setShowForm] = React.useState(false);
+            const [gpa, setGpa] = React.useState(null);
+
+            const gradePoints = {
+                'A': 4.0, 'A-': 3.7,
+                'B+': 3.3, 'B': 3.0, 'B-': 2.7,
+                'C+': 2.3, 'C': 2.0, 'C-': 1.7,
+                'D+': 1.3, 'D': 1.0, 'D-': 0.7,
+                'F': 0.0
+            };
+
+            const handleNumCoursesSubmit = (e) => {
+                e.preventDefault();
+                const num = parseInt(numCourses);
+                if (num > 0) {
+                    setCourses(Array(num).fill({ credits: '', grade: '' }));
+                    setShowForm(true);
+                }
+            };
+
+            const updateCourse = (index, field, value) => {
+                const newCourses = [...courses];
+                newCourses[index] = { ...newCourses[index], [field]: value };
+                setCourses(newCourses);
+            };
+
+            const calculateGPA = (e) => {
+                e.preventDefault();
+                let totalPoints = 0;
+                let totalCredits = 0;
+
+                for (const course of courses) {
+                    const credits = parseFloat(course.credits);
+                    totalPoints += credits * gradePoints[course.grade];
+                    totalCredits += credits;
+                }
+
+                setGpa((totalPoints / totalCredits).toFixed(2));
+            };
+
+            return (
+                <div className="card">
+                    <div className="header">
+                        <h1 className="title">GPA Calculator</h1>
+                    </div>
+                    {!showForm ? (
+                        <form onSubmit={handleNumCoursesSubmit} className="form">
+                            <div className="input-group">
+                                <label>Number of Courses:</label>
+                                <input
+                                    type="number"
+                                    min="1"
+                                    value={numCourses}
+                                    onChange={(e) => setNumCourses(e.target.value)}
+                                    required
+                                />
+                            </div>
+                            <button type="submit">Next</button>
+                        </form>
+                    ) : (
+                        <form onSubmit={calculateGPA} className="form">
+                            {courses.map((course, index) => (
+                                <div key={index} className="course-card">
+                                    <h3>Course {index + 1}</h3>
+                                    <div className="course-inputs">
+                                        <div className="input-group">
+                                            <label>Credit Hours:</label>
+                                            <input
+                                                type="number"
+                                                min="0"
+                                                step="0.5"
+                                                value={course.credits}
+                                                onChange={(e) => updateCourse(index, 'credits', e.target.value)}
+                                                required
+                                            />
+                                        </div>
+                                        <div className="input-group">
+                                            <label>Grade:</label>
+                                            <select
+                                                value={course.grade}
+                                                onChange={(e) => updateCourse(index, 'grade', e.target.value)}
+                                                required
+                                            >
+                                                <option value="">Select</option>
+                                                {Object.keys(gradePoints).map(grade => (
+                                                    <option key={grade} value={grade}>{grade}</option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                            <button type="submit">Calculate GPA</button>
+                        </form>
+                    )}
+                    {gpa && (
+                        <div className="result">
+                            <p className="gpa">Your GPA: {gpa}</p>
+                        </div>
+                    )}
+                </div>
+            );
+        };
+
+        ReactDOM.render(<GPACalculator />, document.getElementById('root'));
+    </script>
+</body>
+</html>
